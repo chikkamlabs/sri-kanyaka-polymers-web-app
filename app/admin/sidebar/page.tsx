@@ -20,7 +20,7 @@ export default function SidebarPage(props: any) {
 
   const menuItems = [
     { name: 'Home', icon: Home, route: '/admin/dashboard' },
-    { name: 'Orders', icon: ShoppingCart, route: '/admin/dashboard' },
+    { name: 'Orders', icon: ShoppingCart, route: '/admin/orders' },
     { name: 'Discounts', icon: Percent, route: '/admin/discounts/dashboard' },
     { name: 'Products', icon: Package, route: '/admin/products/dashboard' },
     { name: 'Dealers', icon: Users, route: '/admin/Dealers/dashboard' },
