@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import AdminHeader from '@/app/admin/header/page';
 import AdminSidebar from '@/app/admin/sidebar/page';
-import { Lock } from 'lucide-react';
+import { Lock, Plus } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -109,8 +110,12 @@ export default function AdminDashboardPage() {
             setActiveItem(item);
             if (item === 'Dealers') {
               router.push('/admin/Dealers/dashboard');
-            } else if (item === 'Companies') {
+            }
+             else if (item === 'Companies') {
               router.push('/admin/companies/dashboard');
+            }
+             else if (item === 'Orders') {
+              router.push('/admin/orders');
             } else if (item === 'Categories') {
               router.push('/admin/categories/dashboard');
             } else if (item === 'Products') {
@@ -123,8 +128,19 @@ export default function AdminDashboardPage() {
         />
 
         {/* Blank Main Area - To fill later */}
-        <main className="flex-1 p-6 bg-[#F8F4EE]">
+        <main className="flex-1 p-6 bg-[#F8F4EE] relative min-h-[calc(100vh-64px)]">
           {/* Main space area left blank as requested */}
+
+          {/* Bottom Right + Order Button */}
+          <div className="fixed bottom-6 right-6 z-20">
+            <Link
+              href="/admin/createorder"
+              className="inline-flex items-center space-x-2 px-5 py-3.5 bg-[#4B352A] hover:bg-[#32231B] text-white font-black text-sm rounded-2xl shadow-lg border border-[#32231B] transition-all hover:scale-105 active:scale-95"
+            >
+              <Plus className="w-5 h-5 text-amber-200" />
+              <span>+ Order</span>
+            </Link>
+          </div>
         </main>
       </div>
     </div>
