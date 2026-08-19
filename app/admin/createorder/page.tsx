@@ -459,7 +459,7 @@ export default function CreateOrderPage() {
               <div className="flex items-center space-x-2 border-b border-[#EEE7DD] pb-3">
                 <Package className="w-4 h-4 text-[#A67C52]" />
                 <h2 className="text-xs font-bold text-[#2F241E] uppercase tracking-wider">
-                  2. Search & Add Items *
+                  2. Search & Add Items*
                 </h2>
               </div>
 
