@@ -4,6 +4,7 @@ export type CompanyStatus = 'Active' | 'Inactive' | 'Hold';
 export type CategoryStatus = 'Active' | 'Inactive';
 export type DealerTransactionType = 'Credit' | 'Debit';
 export type OrderStatus = 'Submitted' | 'Approved' | 'Delivered';
+export type CustomerTransactionCalculation = 'sum' | 'subtract';
 
 // Database Schema Interfaces
 export interface Profile {
@@ -133,6 +134,70 @@ export interface Setting {
   updated_at: string;
 }
 
+export interface Customer {
+  id: string; // UUID
+  name: string;
+  mobile: string | null;
+  points: number;
+  credit: number;
+  location: string | null;
+  address: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerTransaction {
+  id: string; // UUID
+  customer_id: string; // UUID (FK -> customers.id)
+  calculation: CustomerTransactionCalculation;
+  amount: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Optional join
+  customer?: Customer;
+}
+
+export interface Distributor {
+  id: string; // UUID
+  distributor_code: string;
+  name: string;
+  location: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Purchase {
+  id: string; // UUID
+  purchase_id: string;
+  distributor_id: string; // UUID (FK -> distributors.id)
+  quantity: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Optional joins
+  distributor?: Distributor;
+  purchase_items?: PurchaseItem[];
+}
+
+export interface PurchaseItem {
+  id: string; // UUID
+  purchase_id: string; // UUID (FK -> purchases.id)
+  product_id: string; // UUID (FK -> products.id)
+  product_name: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+
+  // Optional join
+  product?: Product;
+}
+
 // Database type definition for Supabase client
 export interface Database {
   public: {
@@ -147,6 +212,11 @@ export interface Database {
       orders: { Row: Order; Insert: Omit<Order, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Order> };
       order_items: { Row: OrderItem; Insert: Omit<OrderItem, 'id' | 'created_at' | 'updated_at'>; Update: Partial<OrderItem> };
       settings: { Row: Setting; Insert: Omit<Setting, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Setting> };
+      customers: { Row: Customer; Insert: Omit<Customer, 'id' | 'created_at' | 'updated_at'> & { id?: string }; Update: Partial<Customer> };
+      customer_transactions: { Row: CustomerTransaction; Insert: Omit<CustomerTransaction, 'id' | 'created_at' | 'updated_at'> & { id?: string }; Update: Partial<CustomerTransaction> };
+      distributors: { Row: Distributor; Insert: Omit<Distributor, 'id' | 'created_at' | 'updated_at'> & { id?: string }; Update: Partial<Distributor> };
+      purchases: { Row: Purchase; Insert: Omit<Purchase, 'id' | 'created_at' | 'updated_at'> & { id?: string }; Update: Partial<Purchase> };
+      purchase_items: { Row: PurchaseItem; Insert: Omit<PurchaseItem, 'id' | 'created_at' | 'updated_at'> & { id?: string }; Update: Partial<PurchaseItem> };
     };
   };
 }

@@ -10,6 +10,9 @@ import {
   Users,
   Building2,
   Tags,
+  Truck,
+  ShoppingBag,
+  UserCheck,
   X
 } from 'lucide-react';
 
@@ -21,9 +24,12 @@ export default function SidebarPage(props: any) {
   const menuItems = [
     { name: 'Home', icon: Home, route: '/admin/dashboard' },
     { name: 'Orders', icon: ShoppingCart, route: '/admin/orders' },
+    { name: 'Purchases', icon: ShoppingBag, route: '/admin/purchases/dashboard' },
     { name: 'Discounts', icon: Percent, route: '/admin/discounts/dashboard' },
     { name: 'Products', icon: Package, route: '/admin/products/dashboard' },
+    { name: 'Customers', icon: UserCheck, route: '/admin/customers/dashboard' },
     { name: 'Dealers', icon: Users, route: '/admin/Dealers/dashboard' },
+    { name: 'Distributors', icon: Truck, route: '/admin/distributors/dashboard' },
     { name: 'Companies', icon: Building2, route: '/admin/companies/dashboard' },
     { name: 'Categories', icon: Tags, route: '/admin/categories/dashboard' },
   ];

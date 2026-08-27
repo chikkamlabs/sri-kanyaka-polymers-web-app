@@ -34,6 +34,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
         CREATE TYPE order_status AS ENUM ('Submitted', 'Approved', 'Delivered');
     END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'customer_transaction_calculation') THEN
+        CREATE TYPE customer_transaction_calculation AS ENUM ('sum', 'subtract');
+    END IF;
 END $$;
 
 -- ==============================================================================
@@ -219,6 +223,65 @@ CREATE TABLE IF NOT EXISTS public.settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Table: customers
+CREATE TABLE IF NOT EXISTS public.customers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    mobile TEXT,
+    points NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    credit NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    location TEXT,
+    address TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table: customer_transactions
+CREATE TABLE IF NOT EXISTS public.customer_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
+    calculation customer_transaction_calculation NOT NULL,
+    amount NUMERIC(12, 2) NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table: distributors
+CREATE TABLE IF NOT EXISTS public.distributors (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    distributor_code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    location TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table: purchases
+CREATE TABLE IF NOT EXISTS public.purchases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    purchase_id TEXT NOT NULL,
+    distributor_id UUID NOT NULL REFERENCES public.distributors(id) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'Submitted',
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table: purchase_items
+CREATE TABLE IF NOT EXISTS public.purchase_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    purchase_id UUID NOT NULL REFERENCES public.purchases(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE RESTRICT,
+    product_name TEXT NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ==============================================================================
 -- 5. Constraints
 -- ==============================================================================
@@ -230,6 +293,8 @@ ALTER TABLE public.products ADD CONSTRAINT products_unique_id_key UNIQUE (unique
 ALTER TABLE public.dealers ADD CONSTRAINT dealers_unique_id_key UNIQUE (unique_id);
 ALTER TABLE public.orders ADD CONSTRAINT orders_unique_id_key UNIQUE (unique_id);
 ALTER TABLE public.settings ADD CONSTRAINT settings_key_unique_key UNIQUE (key);
+ALTER TABLE public.distributors ADD CONSTRAINT distributors_distributor_code_key UNIQUE (distributor_code);
+ALTER TABLE public.purchases ADD CONSTRAINT purchases_purchase_id_key UNIQUE (purchase_id);
 
 -- Multi-column Unique Constraints
 ALTER TABLE public.discounts ADD CONSTRAINT discounts_company_category_unique UNIQUE (company_id, category_id);
@@ -254,6 +319,10 @@ ALTER TABLE public.order_items ADD CONSTRAINT order_items_requested_quantity_che
 ALTER TABLE public.order_items ADD CONSTRAINT order_items_released_quantity_check CHECK (released_quantity >= 0);
 ALTER TABLE public.order_items ADD CONSTRAINT order_items_selling_price_check CHECK (selling_price >= 0);
 
+ALTER TABLE public.customer_transactions ADD CONSTRAINT customer_transactions_amount_check CHECK (amount > 0);
+ALTER TABLE public.purchases ADD CONSTRAINT purchases_quantity_check CHECK (quantity >= 0);
+ALTER TABLE public.purchase_items ADD CONSTRAINT purchase_items_quantity_check CHECK (quantity > 0);
+
 -- ==============================================================================
 -- 6. Indexes
 -- ==============================================================================
@@ -271,6 +340,11 @@ CREATE INDEX IF NOT EXISTS idx_orders_dealer_id ON public.orders(dealer_id);
 
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON public.order_items(product_id);
+
+CREATE INDEX IF NOT EXISTS idx_customer_transactions_customer_id ON public.customer_transactions(customer_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_distributor_id ON public.purchases(distributor_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase_id ON public.purchase_items(purchase_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_items_product_id ON public.purchase_items(product_id);
 
 -- Frequently Searched Fields Indexes
 CREATE INDEX IF NOT EXISTS idx_companies_unique_id ON public.companies(unique_id);
@@ -290,6 +364,16 @@ CREATE INDEX IF NOT EXISTS idx_orders_unique_id ON public.orders(unique_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 
 CREATE INDEX IF NOT EXISTS idx_settings_key ON public.settings(key);
+
+CREATE INDEX IF NOT EXISTS idx_customers_name ON public.customers(name);
+CREATE INDEX IF NOT EXISTS idx_customers_mobile ON public.customers(mobile);
+CREATE INDEX IF NOT EXISTS idx_customers_location ON public.customers(location);
+
+CREATE INDEX IF NOT EXISTS idx_distributors_distributor_code ON public.distributors(distributor_code);
+CREATE INDEX IF NOT EXISTS idx_distributors_name ON public.distributors(name);
+
+CREATE INDEX IF NOT EXISTS idx_purchases_purchase_id ON public.purchases(purchase_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_status ON public.purchases(status);
 
 -- ==============================================================================
 -- 7. Triggers
@@ -336,6 +420,26 @@ CREATE TRIGGER trg_settings_updated_at
     BEFORE UPDATE ON public.settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+CREATE TRIGGER trg_customers_updated_at
+    BEFORE UPDATE ON public.customers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_customer_transactions_updated_at
+    BEFORE UPDATE ON public.customer_transactions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_distributors_updated_at
+    BEFORE UPDATE ON public.distributors
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_purchases_updated_at
+    BEFORE UPDATE ON public.purchases
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_purchase_items_updated_at
+    BEFORE UPDATE ON public.purchase_items
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- Trigger for auth.users signup -> profiles creation
 DROP TRIGGER IF EXISTS trg_on_auth_user_created ON auth.users;
 CREATE TRIGGER trg_on_auth_user_created
@@ -356,6 +460,11 @@ ALTER TABLE public.discounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.distributors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchase_items ENABLE ROW LEVEL SECURITY;
 
 -- ==============================================================================
 -- 9. Policies
@@ -477,6 +586,66 @@ CREATE POLICY "Allow authenticated users to read settings"
 
 CREATE POLICY "Allow authenticated users to write settings"
     ON public.settings FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- Policy: Customers
+CREATE POLICY "Allow authenticated users to read customers"
+    ON public.customers FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Allow authenticated users to write customers"
+    ON public.customers FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- Policy: Customer Transactions
+CREATE POLICY "Allow authenticated users to read customer transactions"
+    ON public.customer_transactions FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Allow authenticated users to write customer transactions"
+    ON public.customer_transactions FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- Policy: Distributors
+CREATE POLICY "Allow authenticated users to read distributors"
+    ON public.distributors FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Allow authenticated users to write distributors"
+    ON public.distributors FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- Policy: Purchases
+CREATE POLICY "Allow authenticated users to read purchases"
+    ON public.purchases FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Allow authenticated users to write purchases"
+    ON public.purchases FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- Policy: Purchase Items
+CREATE POLICY "Allow authenticated users to read purchase items"
+    ON public.purchase_items FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Allow authenticated users to write purchase items"
+    ON public.purchase_items FOR ALL
     TO authenticated
     USING (true)
     WITH CHECK (true);

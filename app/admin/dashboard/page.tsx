@@ -108,14 +108,18 @@ export default function AdminDashboardPage() {
           activeItem={activeItem}
           onSelect={(item: string) => {
             setActiveItem(item);
-            if (item === 'Dealers') {
-              router.push('/admin/Dealers/dashboard');
-            }
-             else if (item === 'Companies') {
-              router.push('/admin/companies/dashboard');
-            }
-             else if (item === 'Orders') {
+            if (item === 'Orders') {
               router.push('/admin/orders');
+            } else if (item === 'Purchases') {
+              router.push('/admin/purchases/dashboard');
+            } else if (item === 'Customers') {
+              router.push('/admin/customers/dashboard');
+            } else if (item === 'Dealers') {
+              router.push('/admin/Dealers/dashboard');
+            } else if (item === 'Distributors') {
+              router.push('/admin/distributors/dashboard');
+            } else if (item === 'Companies') {
+              router.push('/admin/companies/dashboard');
             } else if (item === 'Categories') {
               router.push('/admin/categories/dashboard');
             } else if (item === 'Products') {
