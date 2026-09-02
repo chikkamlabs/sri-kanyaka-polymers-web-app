@@ -61,7 +61,10 @@ export default function ProductsDashboardPage() {
         ]);
 
         if (mounted) {
-          setProducts(productsData);
+          const sorted = [...productsData].sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+          );
+          setProducts(sorted);
           setCompanies(compOptions);
           setCategories(catOptions);
           setLoading(false);
@@ -84,39 +87,41 @@ export default function ProductsDashboardPage() {
   // Total Count
   const totalProductsCount = products.length;
 
-  // Filtered Products List
-  const filteredProducts = products.filter((p) => {
-    // 1. Search Query (Name or ID)
-    const query = searchQuery.trim().toLowerCase();
-    if (query) {
-      const nameMatch = p.name && p.name.toLowerCase().includes(query);
-      const uniqueIdMatch = p.unique_id && p.unique_id.toLowerCase().includes(query);
-      const idMatch = p.id && p.id.toLowerCase().includes(query);
-      if (!nameMatch && !uniqueIdMatch && !idMatch) {
+  // Filtered Products List (Sorted by product.name)
+  const filteredProducts = products
+    .filter((p) => {
+      // 1. Search Query (Name or ID)
+      const query = searchQuery.trim().toLowerCase();
+      if (query) {
+        const nameMatch = p.name && p.name.toLowerCase().includes(query);
+        const uniqueIdMatch = p.unique_id && p.unique_id.toLowerCase().includes(query);
+        const idMatch = p.id && p.id.toLowerCase().includes(query);
+        if (!nameMatch && !uniqueIdMatch && !idMatch) {
+          return false;
+        }
+      }
+
+      // 2. Filter by Company
+      if (selectedCompanyId && p.company_id !== selectedCompanyId) {
         return false;
       }
-    }
 
-    // 2. Filter by Company
-    if (selectedCompanyId && p.company_id !== selectedCompanyId) {
-      return false;
-    }
-
-    // 3. Filter by Category
-    if (selectedCategoryId && p.category_id !== selectedCategoryId) {
-      return false;
-    }
-
-    // 4. Filter Low Stock Checkbox: quantity < low_stock
-    if (onlyLowStock) {
-      const threshold = p.low_stock ?? 10;
-      if (p.quantity >= threshold) {
+      // 3. Filter by Category
+      if (selectedCategoryId && p.category_id !== selectedCategoryId) {
         return false;
       }
-    }
 
-    return true;
-  });
+      // 4. Filter Low Stock Checkbox: quantity < low_stock
+      if (onlyLowStock) {
+        const threshold = p.low_stock ?? 10;
+        if (p.quantity >= threshold) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
 
   if (loading) {
     return (

@@ -185,6 +185,34 @@ export async function createProduct(product: CreateProductInput): Promise<Produc
 }
 
 /**
+ * Create multiple products in Supabase
+ */
+export async function createProducts(productsList: CreateProductInput[]): Promise<Product[]> {
+  if (!productsList || productsList.length === 0) return [];
+
+  const payload = productsList.map((p) => ({
+    ...p,
+    base_price: Number(p.base_price || 0),
+    purchase_price: Number(p.purchase_price || 0),
+    selling_price: Number(p.selling_price || 0),
+    quantity: Number(p.quantity || 0),
+    low_stock: Number(p.low_stock ?? 10),
+  }));
+
+  const { data, error } = await supabase
+    .from('products')
+    .insert(payload)
+    .select();
+
+  if (error) {
+    console.error('Error creating products in Supabase:', error);
+    throw new Error(error.message);
+  }
+
+  return (data || []) as Product[];
+}
+
+/**
  * Update an existing product in Supabase
  */
 export async function updateProduct(id: string, updates: UpdateProductInput): Promise<Product> {

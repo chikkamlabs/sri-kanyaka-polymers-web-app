@@ -48,12 +48,25 @@ export default function AdminOrdersPage() {
   // Orders State
   const [orders, setOrders] = useState<OrderListItem[]>([]);
 
-  // Fetch orders from Supabase using lib/orderStore.ts
-  const fetchOrdersList = useCallback(async (showFullLoader = false) => {
-    if (showFullLoader) setLoading(true);
-    else setRefreshing(true);
-    setErrorMessage(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Check auth
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: authData } = await supabase.auth.getSession();
+      if (!authData.session?.user) {
+        router.replace('/login');
+        return;
+      }
+      setIsAuthenticated(true);
+    }
+    checkAuth();
+  }, [router]);
+
+  // Fetch orders from Supabase with debouncing on search/filters without screen reload
+  const fetchOrdersList = useCallback(async () => {
+    setRefreshing(true);
+    setErrorMessage(null);
     try {
       const data = await getOrders({
         fromDate: fromDate || undefined,
@@ -65,32 +78,47 @@ export default function AdminOrdersPage() {
       console.error('Failed to load orders:', err);
       setErrorMessage(err.message || 'Failed to load orders from database.');
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, [fromDate, toDate, searchQuery]);
 
   useEffect(() => {
-    let mounted = true;
+    if (!isAuthenticated) return;
 
-    async function checkAuthAndLoad() {
-      const { data: authData } = await supabase.auth.getSession();
-      if (!authData.session?.user) {
-        router.replace('/login');
-        return;
+    let active = true;
+    const isFirstRun = loading;
+
+    const timer = setTimeout(async () => {
+      if (isFirstRun) setLoading(true);
+      else setRefreshing(true);
+      setErrorMessage(null);
+
+      try {
+        const data = await getOrders({
+          fromDate: fromDate || undefined,
+          toDate: toDate || undefined,
+          search: searchQuery || undefined,
+        });
+        if (active) {
+          setOrders(data);
+        }
+      } catch (err: any) {
+        if (active) {
+          setErrorMessage(err.message || 'Failed to load orders.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-
-      if (mounted) {
-        fetchOrdersList(true);
-      }
-    }
-
-    checkAuthAndLoad();
+    }, isFirstRun ? 0 : 250);
 
     return () => {
-      mounted = false;
+      active = false;
+      clearTimeout(timer);
     };
-  }, [router, fetchOrdersList]);
+  }, [isAuthenticated, fromDate, toDate, searchQuery, loading]);
 
   // Handle Clear Filter Dates
   const handleResetToToday = () => {
@@ -207,7 +235,7 @@ export default function AdminOrdersPage() {
             <div className="flex items-center space-x-3">
               <button
                 type="button"
-                onClick={() => fetchOrdersList(false)}
+                onClick={() => fetchOrdersList()}
                 disabled={refreshing}
                 title="Refresh orders"
                 className="p-2.5 rounded-xl border border-[#DDD3C6] bg-[#F8F4EE] hover:bg-[#EEE7DD] text-[#5B4A3F] transition-colors"

@@ -48,12 +48,25 @@ export default function PurchasesDashboardPage() {
   // Purchases State
   const [purchases, setPurchases] = useState<PurchaseListItem[]>([]);
 
-  // Fetch Purchases from Supabase using lib/purchasesStore.ts
-  const fetchPurchasesList = useCallback(async (showFullLoader = false) => {
-    if (showFullLoader) setLoading(true);
-    else setRefreshing(true);
-    setErrorMessage(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Check auth
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: authData } = await supabase.auth.getSession();
+      if (!authData.session?.user) {
+        router.replace('/login');
+        return;
+      }
+      setIsAuthenticated(true);
+    }
+    checkAuth();
+  }, [router]);
+
+  // Fetch Purchases from Supabase with debouncing on search/filters without screen reload
+  const fetchPurchasesList = useCallback(async () => {
+    setRefreshing(true);
+    setErrorMessage(null);
     try {
       const data = await getPurchases({
         fromDate: fromDate || undefined,
@@ -65,32 +78,47 @@ export default function PurchasesDashboardPage() {
       console.error('Failed to load purchases:', err);
       setErrorMessage(err.message || 'Failed to load purchases from database.');
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, [fromDate, toDate, searchQuery]);
 
   useEffect(() => {
-    let mounted = true;
+    if (!isAuthenticated) return;
 
-    async function checkAuthAndLoad() {
-      const { data: authData } = await supabase.auth.getSession();
-      if (!authData.session?.user) {
-        router.replace('/login');
-        return;
+    let active = true;
+    const isFirstRun = loading;
+
+    const timer = setTimeout(async () => {
+      if (isFirstRun) setLoading(true);
+      else setRefreshing(true);
+      setErrorMessage(null);
+
+      try {
+        const data = await getPurchases({
+          fromDate: fromDate || undefined,
+          toDate: toDate || undefined,
+          search: searchQuery || undefined,
+        });
+        if (active) {
+          setPurchases(data);
+        }
+      } catch (err: any) {
+        if (active) {
+          setErrorMessage(err.message || 'Failed to load purchases.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-
-      if (mounted) {
-        fetchPurchasesList(true);
-      }
-    }
-
-    checkAuthAndLoad();
+    }, isFirstRun ? 0 : 250);
 
     return () => {
-      mounted = false;
+      active = false;
+      clearTimeout(timer);
     };
-  }, [router, fetchPurchasesList]);
+  }, [isAuthenticated, fromDate, toDate, searchQuery, loading]);
 
   // Handle Clear / Reset Dates
   const handleResetToToday = () => {
@@ -251,7 +279,7 @@ export default function PurchasesDashboardPage() {
 
               <button
                 type="button"
-                onClick={() => fetchPurchasesList(false)}
+                onClick={() => fetchPurchasesList()}
                 disabled={refreshing}
                 title="Refresh purchases list"
                 className="inline-flex items-center justify-center space-x-2 p-2.5 rounded-xl border border-[#DDD3C6] bg-[#F8F4EE] hover:bg-[#EEE7DD] text-[#5B4A3F] transition-colors text-xs font-bold"

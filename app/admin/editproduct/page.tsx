@@ -12,6 +12,10 @@ import {
   DropdownOption,
   ProductWithDetails
 } from '@/lib/productsStore';
+import {
+  getDiscountByCompanyAndCategory,
+  computePurchasePrice
+} from '@/lib/discountsStore';
 import AdminHeader from '@/app/admin/header/page';
 import AdminSidebar from '@/app/admin/sidebar/page';
 import {
@@ -177,13 +181,27 @@ function EditProductForm() {
     setSaving(true);
 
     try {
+      let finalPurchasePrice = Number(purchasePrice || 0);
+
+      // Check if discount exists for the selected company and category
+      const discount = await getDiscountByCompanyAndCategory(companyId, categoryId);
+      if (discount) {
+        finalPurchasePrice = computePurchasePrice(
+          Number(basePrice || 0),
+          discount.d1,
+          discount.d2,
+          discount.d3,
+          discount.d4
+        );
+      }
+
       await updateProduct(productId, {
         unique_id: uniqueId.trim(),
         name: name.trim(),
         company_id: companyId,
         category_id: categoryId,
         base_price: Number(basePrice || 0),
-        purchase_price: Number(purchasePrice || 0),
+        purchase_price: finalPurchasePrice,
         selling_price: Number(sellingPrice || 0),
         quantity: Number(quantity || 0),
         low_stock: Number(lowStock ?? 10),

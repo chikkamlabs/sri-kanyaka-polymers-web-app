@@ -382,7 +382,7 @@ export async function getPurchaseById(id: string): Promise<PurchaseDetail | null
 }
 
 /**
- * Create a new purchase along with its items
+ * Create a new purchase along with its items and update products.quantity = products.quantity + item quantity
  */
 export async function createPurchase(payload: CreatePurchasePayload): Promise<Purchase> {
   const totalQuantity = payload.items.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
@@ -426,13 +426,39 @@ export async function createPurchase(payload: CreatePurchasePayload): Promise<Pu
       await supabase.from('purchases').delete().eq('id', purchaseRow.id);
       throw new Error(`Failed to insert purchase items: ${itemsError.message}`);
     }
+
+    // 3. Update products.quantity = products.quantity + item quantity
+    for (const item of payload.items) {
+      const addedQty = Number(item.quantity) || 0;
+      if (addedQty > 0 && item.product_id) {
+        try {
+          const { data: prodData } = await supabase
+            .from('products')
+            .select('quantity')
+            .eq('id', item.product_id)
+            .single();
+
+          const currentQty = Number(prodData?.quantity) || 0;
+          await supabase
+            .from('products')
+            .update({
+              quantity: currentQty + addedQty,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.product_id);
+        } catch (prodErr) {
+          console.error(`Error updating stock for product ${item.product_id}:`, prodErr);
+        }
+      }
+    }
   }
 
   return purchaseRow as Purchase;
 }
 
 /**
- * Update an existing purchase and synchronise its purchase_items
+ * Update an existing purchase and synchronise its purchase_items.
+ * Also update products.quantity = products.quantity - (difference in old and new purchase_items.quantity).
  */
 export async function updatePurchase(id: string, payload: UpdatePurchasePayload): Promise<void> {
   const updateData: Record<string, any> = {};
@@ -458,8 +484,59 @@ export async function updatePurchase(id: string, payload: UpdatePurchasePayload)
     throw new Error(purchaseError.message);
   }
 
-  // 2. Update items if provided
+  // 2. Update items if provided and adjust product stock
   if (payload.items) {
+    // A. Fetch existing items to calculate the difference in quantities
+    const { data: existingItems } = await supabase
+      .from('purchase_items')
+      .select('id, product_id, quantity')
+      .eq('purchase_id', id);
+
+    const oldQtyMap = new Map<string, number>();
+    for (const it of existingItems || []) {
+      if (it.product_id) {
+        oldQtyMap.set(it.product_id, (oldQtyMap.get(it.product_id) || 0) + (Number(it.quantity) || 0));
+      }
+    }
+
+    const newQtyMap = new Map<string, number>();
+    for (const it of payload.items) {
+      if (it.product_id) {
+        newQtyMap.set(it.product_id, (newQtyMap.get(it.product_id) || 0) + (Number(it.quantity) || 0));
+      }
+    }
+
+    // Adjust product inventory: products.quantity = products.quantity - (oldQuantity - newQuantity)
+    const allProductIds = new Set([...Array.from(oldQtyMap.keys()), ...Array.from(newQtyMap.keys())]);
+    for (const prodId of Array.from(allProductIds)) {
+      const oldQty = oldQtyMap.get(prodId) || 0;
+      const newQty = newQtyMap.get(prodId) || 0;
+      const diff = oldQty - newQty; // difference in old and new purchase_items.quantity
+
+      if (diff !== 0) {
+        try {
+          const { data: prodData } = await supabase
+            .from('products')
+            .select('quantity')
+            .eq('id', prodId)
+            .single();
+
+          const currentProdQty = Number(prodData?.quantity) || 0;
+          const updatedProdQty = currentProdQty - diff; // (products.quantity - difference)
+
+          await supabase
+            .from('products')
+            .update({
+              quantity: updatedProdQty,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', prodId);
+        } catch (stockErr) {
+          console.error(`Error updating product stock for product ${prodId}:`, stockErr);
+        }
+      }
+    }
+
     // Delete existing purchase items
     const { error: deleteError } = await supabase
       .from('purchase_items')

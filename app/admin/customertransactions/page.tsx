@@ -27,8 +27,7 @@ import {
   Lock,
   X,
   ArrowUpRight,
-  ArrowDownLeft,
-  Filter
+  ArrowDownLeft
 } from 'lucide-react';
 
 function CustomerTransactionsContent() {
@@ -274,49 +273,11 @@ function CustomerTransactionsContent() {
               <div>
                 <h1 className="text-xl font-extrabold text-[#2F241E] flex items-center gap-3">
                   <span>Customer Transactions</span>
-                  {selectedCustomerObj && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#F2ECE2] text-[#4B352A] border border-[#DDD3C6] font-bold">
-                      Filtered: {selectedCustomerObj.name}
-                    </span>
-                  )}
                 </h1>
                 <p className="text-xs text-[#8A7B70] mt-0.5">
                   View and manage customer billing records (sum) and payments / deductions (subtract)
                 </p>
               </div>
-            </div>
-
-            {/* Customer Filter Dropdown */}
-            <div className="flex items-center space-x-2 bg-[#F8F4EE] border border-[#DDD3C6] p-1.5 rounded-xl">
-              <Filter className="w-4 h-4 text-[#8A7B70] ml-2 shrink-0" />
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => {
-                  setSelectedCustomerId(e.target.value);
-                  loadData(e.target.value);
-                }}
-                className="bg-transparent text-xs font-bold text-[#2F241E] pr-3 py-1 focus:outline-none cursor-pointer"
-              >
-                <option value="">All Customers ({customers.length})</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.mobile ? `(${c.mobile})` : ''}
-                  </option>
-                ))}
-              </select>
-              {selectedCustomerId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCustomerId('');
-                    loadData('');
-                  }}
-                  className="p-1 text-[#8A7B70] hover:text-[#2F241E]"
-                  title="Clear Filter"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
           </div>
 

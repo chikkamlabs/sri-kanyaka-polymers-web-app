@@ -89,6 +89,71 @@ export async function calculatepp(
 }
 
 /**
+ * Calculate purchase price for a single product given base price and discount rates
+ */
+export function computePurchasePrice(
+  basePrice: number,
+  d1: number,
+  d2: number,
+  d3: number,
+  d4: number
+): number {
+  let currentBase = Number(basePrice || 0);
+  const numD1 = Number(d1 || 0);
+  const numD2 = Number(d2 || 0);
+  const numD3 = Number(d3 || 0);
+  const numD4 = Number(d4 || 0);
+
+  // Apply d1
+  const d1Discount = currentBase * (numD1 / 100);
+  currentBase = currentBase - d1Discount;
+
+  // Apply d2
+  const d2Discount = currentBase * (numD2 / 100);
+  currentBase = currentBase - d2Discount;
+
+  // Apply d3
+  const d3Discount = currentBase * (numD3 / 100);
+  currentBase = currentBase - d3Discount;
+
+  // Add d4 to remaining base
+  const d4Amount = currentBase * (numD4 / 100);
+  const rawPurchasePrice = currentBase + d4Amount;
+
+  // Round off to 3 decimals
+  return Math.round(rawPurchasePrice * 1000) / 1000;
+}
+
+/**
+ * Fetch discount for a specific company and category if available
+ */
+export async function getDiscountByCompanyAndCategory(
+  company_id: string,
+  category_id: string
+): Promise<Discount | null> {
+  if (!company_id || !category_id) return null;
+
+  const { data, error } = await supabase
+    .from('discounts')
+    .select('*')
+    .eq('company_id', company_id)
+    .eq('category_id', category_id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    ...data,
+    d1: Number(data.d1 || 0),
+    d2: Number(data.d2 || 0),
+    d3: Number(data.d3 || 0),
+    d4: Number(data.d4 || 0),
+  } as Discount;
+}
+
+/**
  * Fetch all discounts joined with company and category details
  */
 export async function getDiscounts(): Promise<DiscountWithDetails[]> {
