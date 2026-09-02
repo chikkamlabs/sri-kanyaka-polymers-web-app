@@ -288,22 +288,30 @@ function EditDealerForm() {
                   </div>
                 </div>
 
-                {/* Field 5: Current Credit */}
+                {/* Field 5: Current Credit (Locked / Read-only) */}
                 <div>
-                  <label className="block text-xs font-bold text-[#4B352A] uppercase tracking-wider mb-2">
-                    Current Credit (₹)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-bold text-[#4B352A] uppercase tracking-wider">
+                      Current Credit (₹)
+                    </label>
+                    <span className="text-[11px] font-semibold text-[#8A7B70] flex items-center space-x-1">
+                      <Lock className="w-3 h-3 text-[#A67C52]" />
+                      <span>Non-editable</span>
+                    </span>
+                  </div>
                   <div className="relative">
                     <DollarSign className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
-                      min="0"
+                      disabled
+                      readOnly
                       value={currentCredit}
-                      onChange={(e) => setCurrentCredit(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#EDE6DC] border border-[#DDD3C6] rounded-xl text-sm font-bold text-[#4B352A] cursor-not-allowed opacity-80"
                     />
                   </div>
+                  <p className="text-[11px] text-[#8A7B70] mt-1.5">
+                    Credit balance is managed through dealer transactions.
+                  </p>
                 </div>
 
                 {/* Field 6: Credit Limit */}

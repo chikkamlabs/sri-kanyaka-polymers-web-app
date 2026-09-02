@@ -18,7 +18,8 @@ import {
   Lock,
   IndianRupee,
   Layers,
-  Inbox
+  Inbox,
+  Receipt
 } from 'lucide-react';
 
 export default function DealersDashboardPage() {
@@ -162,16 +163,24 @@ export default function DealersDashboardPage() {
             </div>
           </div>
 
-          {/* Action Row: Add Dealer Button (Horizontal) & Filter & Search */}
+          {/* Action Row: Add Dealer Button & Dealer Transactions Button & Filter & Search */}
           <div className="bg-[#FFFCF8] border border-[#DDD3C6] rounded-2xl p-5 shadow-sm space-y-4">
-            {/* Add Dealer Button (One Horizontal Button) */}
-            <div>
+            {/* Top Action Buttons Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Link
                 href="/admin/adddealer"
-                className="w-full py-3 px-6 bg-[#4B352A] hover:bg-[#32231B] text-white font-bold rounded-xl text-sm shadow-sm transition-all flex items-center justify-center space-x-2 border border-[#32231B]"
+                className="py-3 px-6 bg-[#4B352A] hover:bg-[#32231B] text-white font-bold rounded-xl text-sm shadow-sm transition-all flex items-center justify-center space-x-2 border border-[#32231B]"
               >
                 <Plus className="w-5 h-5 text-amber-200" />
                 <span>Add Dealer</span>
+              </Link>
+
+              <Link
+                href="/admin/dealerstransactions"
+                className="py-3 px-6 bg-[#F2ECE2] hover:bg-[#E7DEC8] text-[#4B352A] font-bold rounded-xl text-sm shadow-sm transition-all flex items-center justify-center space-x-2 border border-[#DDD3C6]"
+              >
+                <Receipt className="w-5 h-5 text-[#A67C52]" />
+                <span>Dealer Transactions</span>
               </Link>
             </div>
 
@@ -305,15 +314,28 @@ export default function DealersDashboardPage() {
                             ₹{Number(d.credit_limit || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </td>
 
-                          {/* Edit button */}
+                          {/* Actions */}
                           <td className="py-4 px-6 text-right">
-                            <Link
-                              href={`/admin/editdealer?id=${d.id}`}
-                              className="inline-flex items-center space-x-1.5 text-xs font-bold text-[#A67C52] hover:text-[#6F4E37] bg-[#F8F4EE] hover:bg-[#F2ECE2] px-3 py-1.5 rounded-lg border border-[#DDD3C6] transition-colors"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                              <span>Edit</span>
-                            </Link>
+                            <div className="inline-flex items-center space-x-2">
+                              {/* Transactions Link Button */}
+                              <Link
+                                href={`/admin/dealerstransactions?dealer_id=${d.id}`}
+                                className="inline-flex items-center space-x-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors text-[#4B352A] bg-[#F2ECE2] hover:bg-[#E7DEC8] border-[#DDD3C6]"
+                                title={`View transactions for ${d.name}`}
+                              >
+                                <Receipt className="w-3.5 h-3.5 text-[#A67C52]" />
+                                <span>Transactions</span>
+                              </Link>
+
+                              {/* Edit button */}
+                              <Link
+                                href={`/admin/editdealer?id=${d.id}`}
+                                className="inline-flex items-center space-x-1.5 text-xs font-bold text-[#A67C52] hover:text-[#6F4E37] bg-[#F8F4EE] hover:bg-[#F2ECE2] px-3 py-1.5 rounded-lg border border-[#DDD3C6] transition-colors"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       );

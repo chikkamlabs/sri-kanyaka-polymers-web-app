@@ -256,10 +256,11 @@ export async function getCustomerTransactionById(id: string): Promise<CustomerTr
  * Create a new customer transaction
  */
 export async function createCustomerTransaction(input: CreateCustomerTransactionInput): Promise<CustomerTransaction> {
+  const amount = Number(input.amount) || 0;
   const payload = {
     customer_id: input.customer_id,
     calculation: input.calculation,
-    amount: Number(input.amount) || 0,
+    amount: amount,
     notes: input.notes?.trim() || null,
   };
 
@@ -272,6 +273,35 @@ export async function createCustomerTransaction(input: CreateCustomerTransaction
   if (error) {
     console.error('Error creating customer transaction:', error);
     throw new Error(error.message);
+  }
+
+  // Update customer points:
+  // if tap sum: update customers.points = customers.points + (1 * amount / 100)
+  // if tap subtract: update customers.points = customers.points - (1 * amount / 100)
+  try {
+    const { data: customerData, error: custFetchErr } = await supabase
+      .from('customers')
+      .select('points')
+      .eq('id', input.customer_id)
+      .single();
+
+    if (!custFetchErr && customerData) {
+      const currentPoints = Number(customerData.points) || 0;
+      const pointsDelta = (1 * amount) / 100;
+      const newPoints = input.calculation === 'sum'
+        ? currentPoints + pointsDelta
+        : currentPoints - pointsDelta;
+
+      await supabase
+        .from('customers')
+        .update({
+          points: newPoints,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.customer_id);
+    }
+  } catch (ptsErr) {
+    console.error('Error updating customer points after creating transaction:', ptsErr);
   }
 
   return data as CustomerTransaction;
