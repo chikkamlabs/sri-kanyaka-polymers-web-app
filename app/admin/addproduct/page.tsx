@@ -90,7 +90,7 @@ export default function AddProductPage() {
           // Initial row
           setRows([
             {
-              tempId: `row-${Date.now()}-0`,
+              tempId: `prod-row-${startingNum}`,
               unique_id: `Prod-${startingNum}`,
               name: '',
               company_id: compList[0]?.id || '',
@@ -111,7 +111,7 @@ export default function AddProductPage() {
         if (mounted) {
           setRows([
             {
-              tempId: `row-${Date.now()}-0`,
+              tempId: 'prod-row-101',
               unique_id: 'Prod-101',
               name: '',
               company_id: '',
@@ -161,7 +161,7 @@ export default function AddProductPage() {
 
     const newIndex = rows.length;
     const newRow: ProductRow = {
-      tempId: `row-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      tempId: `prod-row-${newSeq}`,
       unique_id: `Prod-${newSeq}`,
       name: '',
       company_id: companies[0]?.id || '',
@@ -203,6 +203,14 @@ export default function AddProductPage() {
     colIndex: number,
     totalCols: number = 10
   ) => {
+    if (e.key === 'Enter') {
+      if (colIndex === 9) {
+        e.preventDefault();
+        handleAddAnotherRow();
+        return;
+      }
+    }
+
     if (e.key === 'ArrowRight') {
       const target = e.target as HTMLElement;
       let isAtEnd = true;

@@ -43,6 +43,9 @@ export default function AddDealerPage() {
   // Rows of dealers to add
   const [rows, setRows] = useState<DealerRow[]>([]);
 
+  // Track the row to focus on name field
+  const [rowToFocus, setRowToFocus] = useState<number | null>(null);
+
   // Auto-generate suggested unique_id: DLR-1001 + dealers.length
   useEffect(() => {
     let mounted = true;
@@ -64,7 +67,7 @@ export default function AddDealerPage() {
           // Initial row
           setRows([
             {
-              tempId: `row-${Date.now()}-0`,
+              tempId: `dealer-row-${startingNum}`,
               unique_id: `DLR-${startingNum}`,
               name: '',
               shop_name: '',
@@ -76,13 +79,14 @@ export default function AddDealerPage() {
             },
           ]);
 
+          setRowToFocus(0);
           setLoading(false);
         }
       } catch (err) {
         if (mounted) {
           setRows([
             {
-              tempId: `row-${Date.now()}-0`,
+              tempId: 'dealer-row-1001',
               unique_id: 'DLR-1001',
               name: '',
               shop_name: '',
@@ -94,6 +98,7 @@ export default function AddDealerPage() {
             },
           ]);
           setNextSeqNum(1002);
+          setRowToFocus(0);
           setLoading(false);
         }
       }
@@ -106,13 +111,30 @@ export default function AddDealerPage() {
     };
   }, [router]);
 
+  // Focus the dealer name input when requested
+  useEffect(() => {
+    if (rowToFocus !== null && !loading) {
+      const timer = setTimeout(() => {
+        const target = document.querySelector<HTMLElement>(
+          `[data-dealer-row="${rowToFocus}"][data-dealer-col="1"]`
+        );
+        if (target) {
+          target.focus();
+        }
+        setRowToFocus(null);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [rowToFocus, loading]);
+
   // Add a new row at the bottom
   const handleAddAnotherRow = () => {
     const newSeq = nextSeqNum;
     setNextSeqNum((prev) => prev + 1);
 
+    const newIndex = rows.length;
     const newRow: DealerRow = {
-      tempId: `row-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      tempId: `dealer-row-${newSeq}`,
       unique_id: `DLR-${newSeq}`,
       name: '',
       shop_name: '',
@@ -124,6 +146,7 @@ export default function AddDealerPage() {
     };
 
     setRows((prev) => [...prev, newRow]);
+    setRowToFocus(newIndex);
   };
 
   // Remove a row
@@ -151,6 +174,14 @@ export default function AddDealerPage() {
     colIndex: number,
     totalCols: number = 8
   ) => {
+    if (e.key === 'Enter') {
+      if (colIndex === 7) {
+        e.preventDefault();
+        handleAddAnotherRow();
+        return;
+      }
+    }
+
     if (e.key === 'ArrowRight') {
       const target = e.target as HTMLElement;
       let isAtEnd = true;
@@ -559,7 +590,7 @@ export default function AddDealerPage() {
               </div>
             </div>
 
-            {/* Bottom Actions: Cancel & Confirm products(Insert into dealers) */}
+            {/* Bottom Actions: Cancel & Confirm dealers (Insert into dealers) */}
             <div className="bg-[#FFFCF8] border border-[#DDD3C6] rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
               <Link
                 href="/admin/Dealers/dashboard"
@@ -581,7 +612,7 @@ export default function AddDealerPage() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-5 h-5 text-amber-200" />
-                    <span>Confirm products(Insert into dealers)</span>
+                    <span>Confirm dealers (Insert into dealers)</span>
                   </>
                 )}
               </button>
