@@ -327,7 +327,7 @@ export default function ProductsDashboardPage() {
                         >
                           {/* Id */}
                           <td className="py-4 px-6 font-mono font-bold text-[#4B352A]">
-                            {p.unique_id }
+                            {p.unique_id || p.id.substring(0, 8)}
                           </td>
 
                           {/* Name */}
