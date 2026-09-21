@@ -371,12 +371,17 @@ function EditDiscountForm() {
                     <Percent className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       max="100"
                       required
                       value={d1}
                       onChange={(e) => setD1(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -392,12 +397,17 @@ function EditDiscountForm() {
                     <Percent className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       max="100"
                       required
                       value={d2}
                       onChange={(e) => setD2(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -413,12 +423,17 @@ function EditDiscountForm() {
                     <Percent className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       max="100"
                       required
                       value={d3}
                       onChange={(e) => setD3(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -434,12 +449,17 @@ function EditDiscountForm() {
                     <Percent className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       max="100"
                       required
                       value={d4}
                       onChange={(e) => setD4(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>

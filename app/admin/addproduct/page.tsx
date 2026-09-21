@@ -203,6 +203,12 @@ export default function AddProductPage() {
     colIndex: number,
     totalCols: number = 10
   ) => {
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    return;
+  }
+
     if (e.key === 'Enter') {
       if (colIndex === 9) {
         e.preventDefault();
@@ -552,7 +558,6 @@ export default function AddProductPage() {
                         <td className="py-3 px-3 min-w-[135px]">
                           <input
                             type="number"
-                            step="0.01"
                             min="0"
                             data-nav-row={index}
                             data-nav-col={4}
@@ -564,6 +569,8 @@ export default function AddProductPage() {
                                 e.target.value === '' ? '' : parseFloat(e.target.value)
                               )
                             }
+                            
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => handleCellKeyDown(e, index, 4)}
                             placeholder="0.00"
                             className="w-full px-3 py-2 bg-[#F8F4EE] border border-[#DDD3C6] rounded-lg text-xs font-mono text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
@@ -574,7 +581,6 @@ export default function AddProductPage() {
                         <td className="py-3 px-3 min-w-[135px]">
                           <input
                             type="number"
-                            step="0.01"
                             min="0"
                             data-nav-row={index}
                             data-nav-col={5}
@@ -586,6 +592,7 @@ export default function AddProductPage() {
                                 e.target.value === '' ? '' : parseFloat(e.target.value)
                               )
                             }
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => handleCellKeyDown(e, index, 5)}
                             placeholder="0.00"
                             className="w-full px-3 py-2 bg-[#F8F4EE] border border-[#DDD3C6] rounded-lg text-xs font-mono text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
@@ -596,7 +603,6 @@ export default function AddProductPage() {
                         <td className="py-3 px-3 min-w-[135px]">
                           <input
                             type="number"
-                            step="0.01"
                             min="0"
                             data-nav-row={index}
                             data-nav-col={6}
@@ -608,6 +614,7 @@ export default function AddProductPage() {
                                 e.target.value === '' ? '' : parseFloat(e.target.value)
                               )
                             }
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => handleCellKeyDown(e, index, 6)}
                             placeholder="0.00"
                             className="w-full px-3 py-2 bg-[#F8F4EE] border border-[#DDD3C6] rounded-lg text-xs font-mono font-bold text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
@@ -630,6 +637,7 @@ export default function AddProductPage() {
                                 e.target.value === '' ? '' : parseInt(e.target.value, 10)
                               )
                             }
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => handleCellKeyDown(e, index, 7)}
                             placeholder="0"
                             className="w-full px-2.5 py-2 bg-[#F8F4EE] border border-[#DDD3C6] rounded-lg text-xs font-semibold text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
@@ -651,6 +659,7 @@ export default function AddProductPage() {
                                 e.target.value === '' ? '' : parseInt(e.target.value, 10)
                               )
                             }
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => handleCellKeyDown(e, index, 8)}
                             placeholder="10"
                             className="w-full px-2.5 py-2 bg-[#F8F4EE] border border-[#DDD3C6] rounded-lg text-xs text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"

@@ -417,10 +417,15 @@ function EditProductForm() {
                     <IndianRupee className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       value={basePrice}
                       onChange={(e) => setBasePrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+  onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -435,10 +440,15 @@ function EditProductForm() {
                     <IndianRupee className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       value={purchasePrice}
                       onChange={(e) => setPurchasePrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+  onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -453,10 +463,15 @@ function EditProductForm() {
                     <IndianRupee className="w-4 h-4 text-[#8A7B70] absolute left-3.5 top-3" />
                     <input
                       type="number"
-                      step="0.01"
                       min="0"
                       value={sellingPrice}
                       onChange={(e) => setSellingPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onWheel={(e) => e.currentTarget.blur()}
+  onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -475,6 +490,12 @@ function EditProductForm() {
                       min="0"
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                      onWheel={(e) => e.currentTarget.blur()}
+  onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
@@ -492,6 +513,12 @@ function EditProductForm() {
                       min="0"
                       value={lowStock}
                       onChange={(e) => setLowStock(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                      onWheel={(e) => e.currentTarget.blur()}
+  onKeyDown={(e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+    }
+  }}
                       className="w-full pl-10 pr-4 py-2.5 bg-[#F8F4EE] border border-[#DDD3C6] rounded-xl text-sm text-[#2F241E] focus:outline-none focus:ring-2 focus:ring-[#A67C52]"
                     />
                   </div>
