@@ -372,6 +372,7 @@ function EditDiscountForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       max="100"
                       required
                       value={d1}
@@ -398,6 +399,7 @@ function EditDiscountForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       max="100"
                       required
                       value={d2}
@@ -424,6 +426,7 @@ function EditDiscountForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       max="100"
                       required
                       value={d3}
@@ -450,6 +453,7 @@ function EditDiscountForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       max="100"
                       required
                       value={d4}

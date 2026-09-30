@@ -418,6 +418,7 @@ function EditProductForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       value={basePrice}
                       onChange={(e) => setBasePrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
                       onWheel={(e) => e.currentTarget.blur()}
@@ -441,6 +442,7 @@ function EditProductForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       value={purchasePrice}
                       onChange={(e) => setPurchasePrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
                       onWheel={(e) => e.currentTarget.blur()}
@@ -464,6 +466,7 @@ function EditProductForm() {
                     <input
                       type="number"
                       min="0"
+                       step="0.01"
                       value={sellingPrice}
                       onChange={(e) => setSellingPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
                       onWheel={(e) => e.currentTarget.blur()}

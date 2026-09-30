@@ -338,6 +338,7 @@ export default function AddDiscountPage() {
                   <input
                     type="number"
                     min="0"
+                     step="0.01"
                     max="100"
                     required
                     value={d1}
@@ -365,6 +366,7 @@ export default function AddDiscountPage() {
                   <input
                     type="number"
                     min="0"
+                     step="0.01"
                     max="100"
                     required
                     value={d2}
@@ -392,6 +394,7 @@ export default function AddDiscountPage() {
                   <input
                     type="number"
                     min="0"
+                     step="0.01"
                     max="100"
                     required
                     value={d3}
@@ -419,6 +422,7 @@ export default function AddDiscountPage() {
                   <input
                     type="number"
                     min="0"
+                     step="0.01"
                     max="100"
                     required
                     value={d4}

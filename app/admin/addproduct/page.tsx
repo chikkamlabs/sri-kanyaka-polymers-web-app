@@ -559,6 +559,7 @@ export default function AddProductPage() {
                           <input
                             type="number"
                             min="0"
+                            step="0.01"
                             data-nav-row={index}
                             data-nav-col={4}
                             value={row.base_price}
@@ -582,6 +583,7 @@ export default function AddProductPage() {
                           <input
                             type="number"
                             min="0"
+                            step="0.01"
                             data-nav-row={index}
                             data-nav-col={5}
                             value={row.purchase_price}
@@ -604,6 +606,7 @@ export default function AddProductPage() {
                           <input
                             type="number"
                             min="0"
+                            step="0.01"
                             data-nav-row={index}
                             data-nav-col={6}
                             value={row.selling_price}
