@@ -27,6 +27,8 @@ import {
   Filter
 } from 'lucide-react';
 
+import { generateProductPdf } from '@/lib/generateProductPdf';
+
 export default function ProductsDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,7 @@ export default function ProductsDashboardPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [onlyLowStock, setOnlyLowStock] = useState(false);
 
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +87,7 @@ export default function ProductsDashboardPage() {
     };
   }, [router]);
 
+
   // Total Count
   const totalProductsCount = products.length;
 
@@ -100,6 +104,8 @@ export default function ProductsDashboardPage() {
           return false;
         }
       }
+
+      
 
       // 2. Filter by Company
       if (selectedCompanyId && p.company_id !== selectedCompanyId) {
@@ -122,6 +128,24 @@ export default function ProductsDashboardPage() {
       return true;
     })
     .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+
+    const handleDownloadPdf = async () => {
+  try {
+    setIsGeneratingPdf(true);
+
+    await generateProductPdf(filteredProducts);
+  } catch (error) {
+    console.error('Failed to generate product PDF:', error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : 'Failed to generate product PDF.'
+    );
+  } finally {
+    setIsGeneratingPdf(false);
+  }
+};
 
   if (loading) {
     return (
@@ -172,21 +196,53 @@ export default function ProductsDashboardPage() {
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
           {/* Top Left Stats Bar: Total Products */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-[#FFFCF8] border border-[#DDD3C6] rounded-2xl p-5 shadow-sm flex items-center space-x-4">
-              <div className="w-12 h-12 bg-[#4B352A] text-white rounded-xl flex items-center justify-center shrink-0">
-                <Package className="w-6 h-6 text-[#A67C52]" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-[#8A7B70] uppercase tracking-wider block">
-                  Total Products
-                </span>
-                <span className="text-2xl font-black text-[#2F241E]">
-                  {totalProductsCount}
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* Top Stats Bar: Total Products + Download PDF */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {/* Total Products */}
+  <div className="bg-[#FFFCF8] border border-[#DDD3C6] rounded-2xl p-5 shadow-sm flex items-center space-x-4">
+    <div className="w-12 h-12 bg-[#4B352A] text-white rounded-xl flex items-center justify-center shrink-0">
+      <Package className="w-6 h-6 text-[#A67C52]" />
+    </div>
+
+    <div>
+      <span className="text-xs font-bold text-[#8A7B70] uppercase tracking-wider block">
+        Total Products
+      </span>
+
+      <span className="text-2xl font-black text-[#2F241E]">
+        {totalProductsCount}
+      </span>
+    </div>
+  </div>
+
+  {/* Download PDF */}
+  <button
+    type="button"
+    onClick={handleDownloadPdf}
+    disabled={isGeneratingPdf || filteredProducts.length === 0}
+    className="bg-[#FFFCF8] border border-[#DDD3C6] rounded-2xl p-5 shadow-sm flex items-center space-x-4 text-left hover:bg-[#F8F4EE] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    <div className="w-12 h-12 bg-[#4B352A] text-white rounded-xl flex items-center justify-center shrink-0">
+      {isGeneratingPdf ? (
+        <span className="w-5 h-5 border-2 border-[#A67C52] border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <span className="text-lg font-bold text-[#A67C52]">
+          PDF
+        </span>
+      )}
+    </div>
+
+    <div>
+      <span className="text-xs font-bold text-[#8A7B70] uppercase tracking-wider block">
+        Product List
+      </span>
+
+      <span className="text-sm font-black text-[#2F241E]">
+        {isGeneratingPdf ? 'Generating PDF...' : 'Download PDF'}
+      </span>
+    </div>
+  </button>
+</div>
 
           {/* Action Row: Add Product Button & Search Bar / Filters */}
           <div className="bg-[#FFFCF8] border border-[#DDD3C6] rounded-2xl p-5 shadow-sm space-y-4">
