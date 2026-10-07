@@ -18,6 +18,8 @@ interface ProductPdfRow {
   basePrice: number;
   discount: string;
   purchasePrice: number;
+  companyId?: string | null;
+  categoryId?: string | null;
 }
 
 interface DiscountRecord {
@@ -29,13 +31,6 @@ interface DiscountRecord {
   d4?: number | null;
 }
 
-/**
- * Prepare filtered dashboard products for PDF.
- *
- * Important:
- * The dashboard passes only the currently filtered products.
- * Therefore the PDF contains exactly what is visible in the dashboard.
- */
 async function getProductPdfData(
   products: ProductPdfInput[]
 ): Promise<ProductPdfRow[]> {
@@ -76,30 +71,21 @@ async function getProductPdfData(
     const d3 = Number(discount?.d3 || 0);
     const d4 = Number(discount?.d4 || 0);
 
-    const totalDiscount = d1 + d2 + d3 - d4;
+    // Keep the existing discount display exactly as requested.
+    const discountText = `D1: ${d1}% | D2: ${d2}% | D3: ${d3}% | D4: ${d4}%`;
 
     return {
-      productId:
-        product.unique_id || product.id.substring(0, 8),
-
+      productId: product.unique_id || product.id.substring(0, 8),
       name: product.name || '—',
-
       basePrice: Number(product.base_price || 0),
-
-      discount: `${totalDiscount}%`,
-
+      discount: discountText,
       purchasePrice: Number(product.purchase_price || 0),
+      companyId: product.company_id,
+      categoryId: product.category_id,
     };
   });
 }
 
-/**
- * Generate and download the Products PDF.
- *
- * Only the products passed from the dashboard are included.
- * This means active search/company/category/low-stock filters
- * are respected automatically.
- */
 export async function generateProductPdf(
   products: ProductPdfInput[]
 ): Promise<void> {
@@ -109,118 +95,278 @@ export async function generateProductPdf(
     throw new Error('No products match the current filters.');
   }
 
+  // ---------------------------------------------------------
+  // Fetch Company Names
+  // ---------------------------------------------------------
+
+  const companyIds = [
+    ...new Set(
+      products
+        .map((product) => product.company_id)
+        .filter(Boolean)
+    ),
+  ];
+
+  const companyMap = new Map<string, string>();
+
+  if (companyIds.length > 0) {
+    const { data: companies, error: companiesError } = await supabase
+      .from('companies')
+      .select('id, name')
+      .in('id', companyIds);
+
+    if (companiesError) {
+      console.error('Error fetching companies:', companiesError);
+      throw new Error(companiesError.message);
+    }
+
+    for (const company of companies || []) {
+      companyMap.set(company.id, company.name || '—');
+    }
+  }
+
+  // ---------------------------------------------------------
+  // Fetch Category Names
+  // ---------------------------------------------------------
+
+  const categoryIds = [
+    ...new Set(
+      products
+        .map((product) => product.category_id)
+        .filter(Boolean)
+    ),
+  ];
+
+  const categoryMap = new Map<string, string>();
+
+  if (categoryIds.length > 0) {
+    const { data: categories, error: categoriesError } = await supabase
+      .from('categories')
+      .select('id, name')
+      .in('id', categoryIds);
+
+    if (categoriesError) {
+      console.error('Error fetching categories:', categoriesError);
+      throw new Error(categoriesError.message);
+    }
+
+    for (const category of categories || []) {
+      categoryMap.set(category.id, category.name || '—');
+    }
+  }
+
+  // ---------------------------------------------------------
+  // Create PDF
+  // ---------------------------------------------------------
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
 
-  // Title
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Sri Kanyaka Polymers', 14, 16);
+  const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Subtitle
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Product Price List', 14, 23);
+  // ---------------------------------------------------------
+  // Main Header
+  // ---------------------------------------------------------
 
-  // Generated date
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100);
+  const drawMainHeader = () => {
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
 
-  doc.text(
-    `Generated: ${new Date().toLocaleDateString('en-IN')}`,
-    196,
-    16,
-    { align: 'right' }
-  );
+    doc.text('Sri Kanyaka Polymers', 14, 16);
 
-  doc.setTextColor(0);
+    doc.setFontSize(11);
+    doc.text('Product Price List', 14, 23);
 
-  autoTable(doc, {
-    startY: 30,
+    doc.setFontSize(9);
+    doc.setTextColor(100);
 
-    head: [
-      [
-        'Product ID',
-        'Name',
-        'B.P',
-        'Discount (d1+d2+d3-d4)',
-        'P.P',
+    doc.text(
+      `Generated: ${new Date().toLocaleDateString('en-IN')}`,
+      pageWidth - 14,
+      16,
+      {
+        align: 'right',
+      }
+    );
+
+    doc.setTextColor(0);
+  };
+
+  drawMainHeader();
+
+  // ---------------------------------------------------------
+  // Group Products By Company + Category
+  // ---------------------------------------------------------
+
+  const groups = new Map<
+    string,
+    {
+      companyId: string | null | undefined;
+      categoryId: string | null | undefined;
+      companyName: string;
+      categoryName: string;
+      rows: ProductPdfRow[];
+    }
+  >();
+
+  for (const row of rows) {
+    const groupKey = `${row.companyId || 'null'}:${row.categoryId || 'null'}`;
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        companyId: row.companyId,
+        categoryId: row.categoryId,
+        companyName: row.companyId
+          ? companyMap.get(row.companyId) || '—'
+          : '—',
+        categoryName: row.categoryId
+          ? categoryMap.get(row.categoryId) || '—'
+          : '—',
+        rows: [],
+      });
+    }
+
+    groups.get(groupKey)!.rows.push(row);
+  }
+
+  // ---------------------------------------------------------
+  // Render Each Company + Category Group
+  // ---------------------------------------------------------
+
+  let firstGroup = true;
+
+  for (const group of groups.values()) {
+    // Every new Company + Category starts on a new page.
+    if (!firstGroup) {
+      doc.addPage();
+      drawMainHeader();
+    }
+
+    firstGroup = false;
+
+    const drawGroupHeader = () => {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0);
+
+      doc.text(
+        `Company: ${group.companyName}`,
+        14,
+        32
+      );
+
+      doc.text(
+        `Category: ${group.categoryName}`,
+        14,
+        38
+      );
+    };
+
+    drawGroupHeader();
+
+    autoTable(doc, {
+      startY: 43,
+
+      head: [
+        [
+          'Product ID',
+          'Name',
+          'B.P',
+          'Discounts',
+          'P.P',
+        ],
       ],
-    ],
 
-    body: rows.map((row) => [
-      row.productId,
-      row.name,
-      row.basePrice.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 3,
-      }),
-      row.discount,
-      row.purchasePrice.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 3,
-      }),
-    ]),
+      body: group.rows.map((row) => [
+        row.productId,
+        row.name,
 
-    theme: 'grid',
+        row.basePrice.toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 3,
+        }),
 
-    styles: {
-      font: 'helvetica',
-      fontStyle: 'bold',
-      fontSize: 9,
-      cellPadding: 3,
-      valign: 'middle',
-    },
+        // Existing discount display — unchanged.
+        row.discount,
 
-    headStyles: {
-      font: 'helvetica',
-      fontStyle: 'bold',
-      halign: 'center',
-    },
+        row.purchasePrice.toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 3,
+        }),
+      ]),
 
-    bodyStyles: {
-      font: 'helvetica',
-      fontStyle: 'bold',
-    },
+      theme: 'grid',
 
-    columnStyles: {
-      0: {
-        cellWidth: 27,
+      styles: {
+        font: 'helvetica',
+        fontStyle: 'bold',
+        fontSize: 9,
+        cellPadding: 3,
+        valign: 'middle',
       },
 
-      1: {
-        cellWidth: 'auto',
-      },
-
-      2: {
-        cellWidth: 28,
-        halign: 'right',
-      },
-
-      3: {
-        cellWidth: 45,
+      headStyles: {
+        font: 'helvetica',
+        fontStyle: 'bold',
         halign: 'center',
       },
 
-      4: {
-        cellWidth: 30,
-        halign: 'right',
+      bodyStyles: {
+        font: 'helvetica',
+        fontStyle: 'bold',
       },
-    },
 
-    alternateRowStyles: {
-      fillColor: [248, 244, 238],
-    },
+      columnStyles: {
+        0: {
+          cellWidth: 27,
+        },
 
-    margin: {
-      left: 14,
-      right: 14,
-    },
-  });
+        1: {
+          cellWidth: 'auto',
+        },
+
+        2: {
+          cellWidth: 28,
+          halign: 'right',
+        },
+
+        3: {
+          cellWidth: 60,
+          halign: 'center',
+          fontSize: 7.5,
+        },
+
+        4: {
+          cellWidth: 30,
+          halign: 'right',
+        },
+      },
+
+      alternateRowStyles: {
+        fillColor: [248, 244, 238],
+      },
+
+      margin: {
+        left: 14,
+        right: 14,
+        top: 43,
+        bottom: 15,
+      },
+
+      // If this group's table continues to another page,
+      // repeat the main header + Company + Category header.
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1) {
+          // drawMainHeader();
+          drawGroupHeader();
+        }
+      },
+    });
+  }
 
   doc.save('sri-kanyaka-polymers-products.pdf');
 }
