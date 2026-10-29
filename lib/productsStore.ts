@@ -22,6 +22,7 @@ export async function getCompanyOptions(): Promise<DropdownOption[]> {
   const { data, error } = await supabase
     .from('companies')
     .select('id, name, unique_id')
+    .eq('status', 'Active')
     .order('name', { ascending: true });
 
   if (error) {
@@ -39,6 +40,7 @@ export async function getCategoryOptions(): Promise<DropdownOption[]> {
   const { data, error } = await supabase
     .from('categories')
     .select('id, name, unique_id')
+    .eq('status', 'Active')
     .order('name', { ascending: true });
 
   if (error) {
